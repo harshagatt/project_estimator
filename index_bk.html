@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Development Estimator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6; /* Light gray-green background */
+        }
+        .container {
+            max-width: 960px;
+        }
+        .input-field {
+            @apply w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+        }
+        .btn-primary {
+            @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105;
+        }
+        .card {
+            @apply bg-white p-6 rounded-xl shadow-lg;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center py-10 min-h-screen">
+    <div class="container mx-auto px-4 w-full">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8 mt-4">Software Development Estimator</h1>
+
+        <!-- Estimation Form -->
+        <div class="card mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Enter Project Requirements</h2>
+            <form id="estimationForm" class="space-y-6">
+                <div>
+                    <label for="projectName" class="block text-gray-700 text-sm font-semibold mb-2">Project Name</label>
+                    <input type="text" id="projectName" name="projectName" class="input-field" placeholder="e.g., E-commerce Platform" required>
+                </div>
+                <div>
+                    <label for="description" class="block text-gray-700 text-sm font-semibold mb-2">Project Description</label>
+                    <textarea id="description" name="description" rows="4" class="input-field" placeholder="Briefly describe the project's purpose and scope." required></textarea>
+                </div>
+                <div>
+                    <label for="features" class="block text-gray-700 text-sm font-semibold mb-2">Key Features / Requirements</label>
+                    <textarea id="features" name="features" rows="6" class="input-field" placeholder="List key features or user stories, one per line or separated by commas. e.g., User authentication, Product catalog, Shopping cart, Payment gateway, Admin dashboard"></textarea>
+                </div>
+                <div>
+                    <label for="technologies" class="block text-gray-700 text-sm font-semibold mb-2">Technologies Involved (Optional)</label>
+                    <input type="text" id="technologies" name="technologies" class="input-field" placeholder="e.g., React, Python, Flask, MongoDB, AWS">
+                </div>
+                <div>
+                    <label for="notes" class="block text-gray-700 text-sm font-semibold mb-2">Additional Notes (Optional)</label>
+                    <textarea id="notes" name="notes" rows="3" class="input-field" placeholder="Any other relevant details, constraints, or assumptions."></textarea>
+                </div>
+                <button type="submit" class="btn-primary w-full">Get Estimate</button>
+            </form>
+            <div id="loadingMessage" class="mt-4 text-center text-blue-600 font-medium hidden">
+                Estimating... This may take a moment.
+            </div>
+        </div>
+
+        <!-- Estimation Results -->
+        <div id="results" class="card hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Estimation Results for <span id="resultProjectName" class="text-blue-600"></span></h2>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-lg font-medium text-gray-800">Total Estimated Cost:</p>
+                    <p id="costEstimate" class="text-xl text-green-700 font-bold ml-4"></p>
+                </div>
+                <div>
+                    <p class="text-lg font-medium text-gray-800">Agile Development Estimate:</p>
+                    <p id="agileEstimate" class="text-xl text-purple-700 font-bold ml-4"></p>
+                </div>
+                <div>
+                    <p class="text-lg font-medium text-gray-800">Waterfall Development Estimate:</p>
+                    <p id="waterfallEstimate" class="text-xl text-red-700 font-bold ml-4"></p>
+                </div>
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-sm font-medium text-gray-600">Raw OLAMA Response (for debugging):</p>
+                    <pre id="rawOlamaResponse" class="text-xs text-gray-500 whitespace-pre-wrap mt-2"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="card mt-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Estimation History</h2>
+            <div id="historyList" class="space-y-4">
+                <p class="text-gray-500">Loading history...</p>
+            </div>
+            <p id="noHistoryMessage" class="text-gray-500 hidden">No past estimates found.</p>
+        </div>
+    </div>
+
+    <script>
+        const estimationForm = document.getElementById('estimationForm');
+        const resultsDiv = document.getElementById('results');
+        const resultProjectName = document.getElementById('resultProjectName');
+        const costEstimate = document.getElementById('costEstimate');
+        const agileEstimate = document.getElementById('agileEstimate');
+        const waterfallEstimate = document.getElementById('waterfallEstimate');
+        const rawOlamaResponse = document.getElementById('rawOlamaResponse');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const historyList = document.getElementById('historyList');
+        const noHistoryMessage = document.getElementById('noHistoryMessage');
+
+        const API_BASE_URL = window.location.origin; // Dynamically get base URL
+
+        // Function to fetch and display history
+        async function fetchHistory() {
+            historyList.innerHTML = ''; // Clear existing history
+            noHistoryMessage.classList.add('hidden'); // Hide no history message initially
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/history`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const history = await response.json();
+
+                if (history.length === 0) {
+                    noHistoryMessage.classList.remove('hidden');
+                    return;
+                }
+
+                history.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200';
+                    historyItem.innerHTML = `
+                        <h3 class="text-lg font-semibold text-blue-700">${item.projectName}</h3>
+                        <p class="text-sm text-gray-600 mb-2">Estimated on: ${item.timestamp}</p>
+                        <ul class="text-gray-700 text-sm space-y-1">
+                            <li><strong>Cost:</strong> ${item.costEstimate || 'N/A'}</li>
+                            <li><strong>Agile:</strong> ${item.agileEstimate || 'N/A'}</li>
+                            <li><strong>Waterfall:</strong> ${item.waterfallEstimate || 'N/A'}</li>
+                        </ul>
+                        <details class="text-xs text-gray-500 mt-2">
+                            <summary>View Raw Requirements & LLM Response</summary>
+                            <pre class="whitespace-pre-wrap mt-1">
+                                <strong>Requirements:</strong>
+                                ${item.requirements || 'N/A'}
+
+                                <strong>Raw LLM Response:</strong>
+                                ${item.olamaRawResponse || 'N/A'}
+                            </pre>
+                        </details>
+                    `;
+                    historyList.appendChild(historyItem);
+                });
+            } catch (error) {
+                console.error("Error fetching history:", error);
+                historyList.innerHTML = `<p class="text-red-500">Failed to load history: ${error.message}</p>`;
+            }
+        }
+
+        // Handle form submission
+        estimationForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Show loading message and hide previous results
+            resultsDiv.classList.add('hidden');
+            loadingMessage.classList.remove('hidden');
+
+            const formData = new FormData(estimationForm);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/estimate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Populate results
+                resultProjectName.textContent = result.projectName;
+                costEstimate.textContent = result.costEstimate;
+                agileEstimate.textContent = result.agileEstimate;
+                waterfallEstimate.textContent = result.waterfallEstimate;
+                rawOlamaResponse.textContent = result.olamaRawResponse;
+
+                resultsDiv.classList.remove('hidden'); // Show results
+                loadingMessage.classList.add('hidden'); // Hide loading message
+
+                // Refresh history after a new estimate is added
+                fetchHistory();
+
+            } catch (error) {
+                console.error("Error getting estimate:", error);
+                loadingMessage.classList.add('hidden'); // Hide loading message
+                resultsDiv.classList.remove('hidden'); // Still show results div to display error
+                resultProjectName.textContent = 'Error';
+                costEstimate.textContent = `Error: ${error.message}. Please check console for details.`;
+                agileEstimate.textContent = '';
+                waterfallEstimate.textContent = '';
+                rawOlamaResponse.textContent = 'Could not get response from OLAMA or backend. Check your backend server and OLAMA setup.';
+            }
+        });
+
+        // Fetch history when the page loads
+        document.addEventListener('DOMContentLoaded', fetchHistory);
+    </script>
+</body>
+</html>
