@@ -12,21 +12,20 @@ Easy local deployment
 
 Project Folder structure 
 
-dev-estimator-ai/
-│
-├── app.py                # Main Flask application
-├── requirements.txt      # Python dependencies
-├── .env.example          # Environment variables template
-├── README.md             # Project documentation
-│
-├── static/               # Frontend assets
-│   ├── index.html        # Main interface
-│   ├── css/             # CSS files (if any)
-│   └── js/              # JavaScript files (if any)
-│
-├── venv/                 # Python virtual environment (ignored in Git)
-│
-└── .gitignore            # Specifies ignored files
+/ (root)
+
+│-- app.py
+│-- requirements.txt
+│-- .env.example
+
+│-- static/
+│   │-- index.html
+│   │-- css/
+│   │-- js/
+
+│-- venv/
+
+│-- .gitignore
 
 🛠️ Installation Guide
 1. Prerequisites
