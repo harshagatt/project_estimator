@@ -10,6 +10,12 @@ Clean Bootstrap 5 interface
 
 Easy local deployment
 
+Prompt to get the code from Chatgpt
+
+I would like to create a static page which is connected to my local OLAMA server where I can provide the requirements and it would give me the cost, estimate in AGILE, waterfall model of software development. Create a user guide and code repo so that I can do this on my local machine using python, flask and OLAMA LLM, store the data in mongo db.
+
+
+
 Project Folder structure 
 
 / (root)
