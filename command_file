@@ -1,0 +1,209 @@
+Install Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+Add Homebrew to your PATH:
+
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
+source ~/.zshrc
+
+
+Install Mongo DB 
+
+brew tap mongodb/brew
+brew install mongodb-community
+
+Start MongoDB
+brew services start mongodb-community
+
+Connect:
+mongosh
+
+Verify if mongo db is installed 
+
+which mongod
+which mongosh
+
+Verify if Mongo DB is running on default host 
+
+lsof -i :27017
+
+Try a different port (if 27017 is blocked)
+
+mongod --port 27018
+
+
+🔍 Common Causes
+1. Improper shutdown - MongoDB wasn't stopped cleanly
+2. Data directory permissions - Your user doesn't have write access
+3. Port conflict - Another process is using MongoDB's port (27017)
+4. Corrupted lock file - From a previous crash
+
+STOP services, clean up files 
+brew services stop mongodb-community
+brew services stop mongodb-community@7.0
+sudo rm -rf /tmp/mongodb-27017.sock
+sudo rm -rf /data/db/mongod.lock  # If using default data path
+
+RESET permissions on LOCK files 
+sudo chown -R $(whoami) /usr/local/var/mongodb
+sudo chown -R $(whoami) /usr/local/var/log/mongodb
+sudo mkdir -p /data/db
+sudo chown -R $(whoami) /data/db
+
+RESTART MONGODB 
+brew services start mongodb-community
+
+COMPLETE RESTART OPTION 
+
+brew uninstall mongodb-community
+brew cleanup
+rm -rf /usr/local/var/mongodb
+brew install mongodb-community
+
+
+
+OLLAMA 
+
+1. Install Ollama (if not already installed)
+brew install ollama
+
+2. Start Ollama as a service (auto-restarts on reboot)
+brew services start ollama
+
+3. Verify it's running
+brew services list | grep ollama
+
+
+Command	Description
+brew services start ollama	Starts Ollama in background
+brew services stop ollama	Stops the service
+brew services restart ollama	Restarts Ollama
+ollama serve	Run manually (foreground)
+
+Ollama automatically registers as a launchd service when installed via Homebrew. No extra setup needed!
+
+
+RESTART OLLAMA
+
+brew services restart ollama
+
+
+1. First, stop and reset Ollama:
+
+
+brew services stop ollama
+pkill -9 ollama
+rm -rf ~/.ollama
+
+2. Check for port conflicts (11434):
+
+sudo lsof -i :11434
+# If any process appears, kill it:
+kill -9 <PID>
+
+3. Reinstall Ollama completely:
+
+
+brew uninstall ollama
+brew install ollama
+
+4. Set proper permissions:
+
+sudo mkdir -p ~/.ollama
+sudo chown -R $(whoami) ~/.ollama
+
+5. Start Ollama manually first (to see errors):
+
+ollama serve
+Look for any error messages in this output
+
+6. Once manual start works, try service again:
+
+brew services start ollama
+
+🔍 Common Fixes Based on Errors
+If you see "port already in use":
+
+
+sudo lsof -i :11434
+kill -9 <PID>
+If you see "permission denied":
+
+
+sudo chmod -R 755 ~/.ollama
+If models are missing:
+
+
+ollama pull mistral  # Or your preferred model
+
+✅ Verification
+
+
+brew services list | grep ollama
+# Should show "started" status
+
+curl http://localhost:11434
+# Should return "Ollama is running"
+
+
+
+Download the project from GITHUB and ensure the following project structure is maintained in your local machine 
+
+Project Structure 
+
+software_estimator/
+├── app.py
+├── static/
+│   ├── index.html
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── .env
+└── requirements.txt
+
+Avoid permission issues by running this command in SUDO mode 
+
+chmod -R 755 static/
+
+Open http://127.0.0.1:5001/ in your browser
+
+
+Verify Python is Installed
+
+which python3
+Python3 —version 
+
+If not installed, use this command 
+
+brew install python
+
+Add Python to the PATH 
+
+echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+
+Open a new terminal and navigate to your folder 
+
+cd /path/to/your/folder
+
+Run python 
+python3
+
+If you want to start your application, run a virtual environment 
+
+cd your_project_folder
+python3 -m venv venv
+source venv/bin/activate
+
+In case you get CORS issue ; try installing all required packages
+
+pip install flask flask-cors pymongo python-dotenv requests
+
+Create a requirements.txt file 
+
+pip freeze > requirements.txt
+
+Run your application 
+
+python3 app.py
